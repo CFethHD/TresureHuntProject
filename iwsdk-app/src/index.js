@@ -1,20 +1,29 @@
+
 import {
   Mesh,
   MeshStandardMaterial,
   SphereGeometry,
   SessionMode,
   World,
+  AssetManager, AssetType, LocomotionEnvironment, EnvironmentType, PlaneGeometry,   // <-------------- more imports
 } from '@iwsdk/core';
 
 import {
   Interactable,
   PanelUI,
-  ScreenSpace
+  ScreenSpace,
 } from '@iwsdk/core';
 
 import { PanelSystem } from './panel.js'; // system for displaying "Enter VR" panel on Quest 1
 
-const assets = { };
+const assets = {
+  myPlant: {                                // <----------------------- added plant model
+    url: '/gltf/plantSansevieria/plantSansevieria.gltf',
+    type: AssetType.GLTF,
+    priority: 'critical',
+  },
+};
+
 
 World.create(document.getElementById('scene-container'), {
   assets,
@@ -24,25 +33,44 @@ World.create(document.getElementById('scene-container'), {
     features: { }
   },
 
-  features: { },
+  features: {locomotion: true },             // <----------------- added locomotion: true
 
 }).then((world) => {
 
   const { camera } = world;
 
-  
+ 
   // Create a green sphere
   const sphereGeometry = new SphereGeometry(0.5, 32, 32);
   const greenMaterial = new MeshStandardMaterial({ color: 0x33ff33 });
   const sphere = new Mesh(sphereGeometry, greenMaterial);
-  sphere.position.set(1, 0, -2);
+  //sphere.position.set(1, 0, -2);
   const sphereEntity = world.createTransformEntity(sphere);
 
+  // move the sphere in front of user
+  sphereEntity.object3D.position.set(0,1,-3);  
+ 
+  // delete the sphere when it gets selected
+  sphereEntity.addComponent(Interactable);      
+  sphereEntity.object3D.addEventListener("pointerdown", removeCube);
+  function removeCube() {
+      sphereEntity.destroy();
+  }
 
+  // add a floor
+  const floorGeometry = new PlaneGeometry(10, 10);
+  const floorMaterial = new MeshStandardMaterial( { color: 'green' } );
+  const floorMesh = new Mesh(floorGeometry, floorMaterial);
+  floorMesh.rotation.x = -Math.PI / 2;
+  const floorEntity = world.createTransformEntity(floorMesh);
 
+  // make floor walkable (also see "locomotion" setting and imports above)
+  floorEntity.addComponent(LocomotionEnvironment, { type: EnvironmentType.STATIC });
 
-
-
+  // import the plant model (also see "assets" section above)
+  const plantModel = AssetManager.getGLTF('myPlant').scene;
+  const plantEntity = world.createTransformEntity(plantModel);
+  plantEntity.object3D.position.set(-1,1,-1);
 
 
 
@@ -51,7 +79,7 @@ World.create(document.getElementById('scene-container'), {
   // vvvvvvvv EVERYTHING BELOW WAS ADDED TO DISPLAY A BUTTON TO ENTER VR FOR QUEST 1 DEVICES vvvvvv
   //          (for some reason IWSDK doesn't show Enter VR button on Quest 1)
   world.registerSystem(PanelSystem);
-  
+ 
   if (isMetaQuest1()) {
     const panelEntity = world
       .createTransformEntity()
@@ -84,3 +112,5 @@ World.create(document.getElementById('scene-container'), {
   }
 
 });
+
+
