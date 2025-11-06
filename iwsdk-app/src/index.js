@@ -96,6 +96,12 @@ World.create(document.getElementById('scene-container'), {
   gemEntity.object3D.position.set(-3, 3, -2); 
   gemEntity.object3D.scale.setScalar(3);  
 
+  // adding second gem (found in right tree)
+  const gemModel2 = AssetManager.getGLTF('gem').scene.clone();
+  const gemEntity2 = world.createTransformEntity(gemModel2);
+  gemEntity2.object3D.position.set(2, 3, -5); 
+  gemEntity2.object3D.scale.setScalar(3);  
+
   // Quest panel
   world.registerSystem(PanelSystem);
  
