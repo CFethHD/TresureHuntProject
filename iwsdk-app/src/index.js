@@ -1,11 +1,12 @@
-
 import {
   Mesh,
   MeshStandardMaterial,
   SphereGeometry,
   SessionMode,
   World,
-  AssetManager, AssetType, LocomotionEnvironment, EnvironmentType, PlaneGeometry,   // <-------------- more imports
+  AssetManager, AssetType,
+  LocomotionEnvironment, EnvironmentType,
+  PlaneGeometry,
 } from '@iwsdk/core';
 
 import {
@@ -16,68 +17,68 @@ import {
 
 import { PanelSystem } from './panel.js'; // system for displaying "Enter VR" panel on Quest 1
 
+// ---------------------- ASSETS ----------------------
 const assets = {
-  myPlant: {                                // <----------------------- added plant model
+  myPlant: {                                
     url: '/gltf/plantSansevieria/plantSansevieria.gltf',
     type: AssetType.GLTF,
     priority: 'critical',
   },
+  tree: {                                   // 🌳 add the tree model
+    url: new URL('./tree.glb', import.meta.url).href, // same folder as index.js
+    type: AssetType.GLTF,
+    priority: 'normal',
+  },
 };
 
-
+// ---------------------- WORLD SETUP ----------------------
 World.create(document.getElementById('scene-container'), {
   assets,
   xr: {
     sessionMode: SessionMode.ImmersiveVR,
     offer: 'always',
-    features: { }
+    features: {}
   },
-
-  features: {locomotion: true },             // <----------------- added locomotion: true
-
+  features: { locomotion: true },             
 }).then((world) => {
 
   const { camera } = world;
 
- 
-  // Create a green sphere
+  // ---------------------- SPHERE ----------------------
   const sphereGeometry = new SphereGeometry(0.5, 32, 32);
   const greenMaterial = new MeshStandardMaterial({ color: 0x33ff33 });
   const sphere = new Mesh(sphereGeometry, greenMaterial);
-  //sphere.position.set(1, 0, -2);
   const sphereEntity = world.createTransformEntity(sphere);
 
-  // move the sphere in front of user
-  sphereEntity.object3D.position.set(0,1,-3);  
- 
-  // delete the sphere when it gets selected
+  sphereEntity.object3D.position.set(0, 1, -3);  
   sphereEntity.addComponent(Interactable);      
-  sphereEntity.object3D.addEventListener("pointerdown", removeCube);
-  function removeCube() {
-      sphereEntity.destroy();
+  sphereEntity.object3D.addEventListener("pointerdown", removeSphere);
+  function removeSphere() {
+    sphereEntity.destroy();
   }
 
-  // add a floor
+  // ---------------------- FLOOR ----------------------
   const floorGeometry = new PlaneGeometry(10, 10);
-  const floorMaterial = new MeshStandardMaterial( { color: 'green' } );
+  const floorMaterial = new MeshStandardMaterial({ color: 'green' });
   const floorMesh = new Mesh(floorGeometry, floorMaterial);
   floorMesh.rotation.x = -Math.PI / 2;
   const floorEntity = world.createTransformEntity(floorMesh);
 
-  // make floor walkable (also see "locomotion" setting and imports above)
   floorEntity.addComponent(LocomotionEnvironment, { type: EnvironmentType.STATIC });
 
-  // import the plant model (also see "assets" section above)
+  // ---------------------- PLANT ----------------------
   const plantModel = AssetManager.getGLTF('myPlant').scene;
   const plantEntity = world.createTransformEntity(plantModel);
-  plantEntity.object3D.position.set(-1,1,-1);
+  plantEntity.object3D.position.set(-1, 1, -1);
 
+  // ---------------------- TREE ----------------------
+  const treeModel = AssetManager.getGLTF('tree').scene;
+  const treeEntity = world.createTransformEntity(treeModel);
+  treeEntity.object3D.position.set(2, 0, -2); // adjust as needed
+  // Optional scaling if tree is too big/small:
+  // treeEntity.object3D.scale.setScalar(0.5);
 
-
-
-
-  // vvvvvvvv EVERYTHING BELOW WAS ADDED TO DISPLAY A BUTTON TO ENTER VR FOR QUEST 1 DEVICES vvvvvv
-  //          (for some reason IWSDK doesn't show Enter VR button on Quest 1)
+  // ---------------------- QUEST 1 PANEL ----------------------
   world.registerSystem(PanelSystem);
  
   if (isMetaQuest1()) {
@@ -96,10 +97,10 @@ World.create(document.getElementById('scene-container'), {
       });
     panelEntity.object3D.position.set(0, 1.29, -1.9);
   } else {
-    // Skip panel on non-Meta-Quest-1 devices
-    // Useful for debugging on desktop or newer headsets.
     console.log('Panel UI skipped: not running on Meta Quest 1 (heuristic).');
   }
+
+  // ---------------------- QUEST DETECTION ----------------------
   function isMetaQuest1() {
     try {
       const ua = (navigator && (navigator.userAgent || '')) || '';
@@ -112,5 +113,3 @@ World.create(document.getElementById('scene-container'), {
   }
 
 });
-
-
