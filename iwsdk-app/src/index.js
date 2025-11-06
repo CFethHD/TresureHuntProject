@@ -17,21 +17,27 @@ import {
 
 import { PanelSystem } from './panel.js'; // system for displaying "Enter VR" panel on Quest 1
 
-// ---------------------- ASSETS ----------------------
+// ASSETS
 const assets = {
-  myPlant: {                                
+  myPlant: {
     url: '/gltf/plantSansevieria/plantSansevieria.gltf',
     type: AssetType.GLTF,
     priority: 'critical',
   },
-  tree: {                                   // 🌳 add the tree model
-    url: new URL('./tree.glb', import.meta.url).href, // same folder as index.js
+  tree: {
+    url: new URL('./tree.glb', import.meta.url).href,
+    type: AssetType.GLTF,
+    priority: 'normal',
+  },
+  gem: { 
+    url: new URL('./gem.glb', import.meta.url).href,
     type: AssetType.GLTF,
     priority: 'normal',
   },
 };
 
-// ---------------------- WORLD SETUP ----------------------
+
+// world setup
 World.create(document.getElementById('scene-container'), {
   assets,
   xr: {
@@ -44,21 +50,21 @@ World.create(document.getElementById('scene-container'), {
 
   const { camera } = world;
 
-  // ---------------------- SPHERE ----------------------
-  const sphereGeometry = new SphereGeometry(0.5, 32, 32);
-  const greenMaterial = new MeshStandardMaterial({ color: 0x33ff33 });
-  const sphere = new Mesh(sphereGeometry, greenMaterial);
-  const sphereEntity = world.createTransformEntity(sphere);
+  // test sphere
+  //const sphereGeometry = new SphereGeometry(0.5, 32, 32);
+  //const greenMaterial = new MeshStandardMaterial({ color: 0x33ff33 });
+  //const sphere = new Mesh(sphereGeometry, greenMaterial);
+  //const sphereEntity = world.createTransformEntity(sphere);
 
-  sphereEntity.object3D.position.set(0, 1, -3);  
-  sphereEntity.addComponent(Interactable);      
-  sphereEntity.object3D.addEventListener("pointerdown", removeSphere);
-  function removeSphere() {
-    sphereEntity.destroy();
-  }
+  //sphereEntity.object3D.position.set(0, 1, -3);  
+  //sphereEntity.addComponent(Interactable);      
+  //sphereEntity.object3D.addEventListener("pointerdown", removeSphere);
+  //function removeSphere() {
+    //sphereEntity.destroy();
+  //}
 
-  // ---------------------- FLOOR ----------------------
-  const floorGeometry = new PlaneGeometry(10, 10);
+  // adding floor
+  const floorGeometry = new PlaneGeometry(20, 20);
   const floorMaterial = new MeshStandardMaterial({ color: 'green' });
   const floorMesh = new Mesh(floorGeometry, floorMaterial);
   floorMesh.rotation.x = -Math.PI / 2;
@@ -66,19 +72,31 @@ World.create(document.getElementById('scene-container'), {
 
   floorEntity.addComponent(LocomotionEnvironment, { type: EnvironmentType.STATIC });
 
-  // ---------------------- PLANT ----------------------
-  const plantModel = AssetManager.getGLTF('myPlant').scene;
-  const plantEntity = world.createTransformEntity(plantModel);
-  plantEntity.object3D.position.set(-1, 1, -1);
+  // adding plant
+  //const plantModel = AssetManager.getGLTF('myPlant').scene;
+  //const plantEntity = world.createTransformEntity(plantModel);
+  //plantEntity.object3D.position.set(-1, 1, -1);
 
-  // ---------------------- TREE ----------------------
+  // adding tree
   const treeModel = AssetManager.getGLTF('tree').scene;
   const treeEntity = world.createTransformEntity(treeModel);
-  treeEntity.object3D.position.set(2, 0, -2); // adjust as needed
+  treeEntity.object3D.position.set(-10, -0.5, -2); 
   // Optional scaling if tree is too big/small:
   // treeEntity.object3D.scale.setScalar(0.5);
 
-  // ---------------------- QUEST 1 PANEL ----------------------
+  // adding second tree
+  const treeModel2 = AssetManager.getGLTF('tree').scene.clone(); 
+  const treeEntity2 = world.createTransformEntity(treeModel2);
+  treeEntity2.object3D.position.set(-3, -0.5, -4); 
+  treeEntity2.object3D.scale.setScalar(0.8);   
+
+  // adding gem (found in left tree)
+  const gemModel = AssetManager.getGLTF('gem').scene;
+  const gemEntity = world.createTransformEntity(gemModel);
+  gemEntity.object3D.position.set(-3, 3, -2); 
+  gemEntity.object3D.scale.setScalar(3);  
+
+  // Quest panel
   world.registerSystem(PanelSystem);
  
   if (isMetaQuest1()) {
@@ -100,7 +118,7 @@ World.create(document.getElementById('scene-container'), {
     console.log('Panel UI skipped: not running on Meta Quest 1 (heuristic).');
   }
 
-  // ---------------------- QUEST DETECTION ----------------------
+  // Quest Detection
   function isMetaQuest1() {
     try {
       const ua = (navigator && (navigator.userAgent || '')) || '';
