@@ -50,18 +50,29 @@ World.create(document.getElementById('scene-container'), {
 
   const { camera } = world;
 
-  // test sphere
-  //const sphereGeometry = new SphereGeometry(0.5, 32, 32);
-  //const greenMaterial = new MeshStandardMaterial({ color: 0x33ff33 });
-  //const sphere = new Mesh(sphereGeometry, greenMaterial);
-  //const sphereEntity = world.createTransformEntity(sphere);
+  // --- SIMPLE TREASURE / SCORE SYSTEM (ADDED) ---
+  const totalGems = 3;
+  let collectedGems = 0;
 
-  //sphereEntity.object3D.position.set(0, 1, -3);  
-  //sphereEntity.addComponent(Interactable);      
-  //sphereEntity.object3D.addEventListener("pointerdown", removeSphere);
-  //function removeSphere() {
-    //sphereEntity.destroy();
-  //}
+  function showWinMessage() {
+    // You can replace this with the message code from the slides if needed
+    alert('You win! All treasures collected!');
+  }
+
+  function collectGem(entity) {
+    // remove the gem from the world
+    entity.destroy();
+
+    // update score
+    collectedGems++;
+    console.log(`Gems collected: ${collectedGems} / ${totalGems}`);
+
+    // check win condition
+    if (collectedGems === totalGems) {
+      showWinMessage();
+    }
+  }
+  // --- END SCORE SYSTEM ---
 
   // adding floor
   const floorGeometry = new PlaneGeometry(20, 20);
@@ -71,11 +82,6 @@ World.create(document.getElementById('scene-container'), {
   const floorEntity = world.createTransformEntity(floorMesh);
 
   floorEntity.addComponent(LocomotionEnvironment, { type: EnvironmentType.STATIC });
-
-  // adding plant
-  //const plantModel = AssetManager.getGLTF('myPlant').scene;
-  //const plantEntity = world.createTransformEntity(plantModel);
-  //plantEntity.object3D.position.set(-1, 1, -1);
 
   // adding tree
   const treeModel = AssetManager.getGLTF('tree').scene;
@@ -96,17 +102,29 @@ World.create(document.getElementById('scene-container'), {
   gemEntity.object3D.position.set(-3, 3, -2); 
   gemEntity.object3D.scale.setScalar(3);  
 
+  // make gem 1 clickable / collectable
+  gemEntity.addComponent(Interactable);
+  gemEntity.object3D.addEventListener('pointerdown', () => collectGem(gemEntity));
+
   // adding second gem (found in right tree)
   const gemModel2 = AssetManager.getGLTF('gem').scene.clone();
   const gemEntity2 = world.createTransformEntity(gemModel2);
   gemEntity2.object3D.position.set(2, 3, -5); 
   gemEntity2.object3D.scale.setScalar(3);  
 
+  // make gem 2 clickable / collectable
+  gemEntity2.addComponent(Interactable);
+  gemEntity2.object3D.addEventListener('pointerdown', () => collectGem(gemEntity2));
+
   // adding third gem (found in right tree)
   const gemModel3 = AssetManager.getGLTF('gem').scene.clone();
   const gemEntity3 = world.createTransformEntity(gemModel3);
   gemEntity3.object3D.position.set(0, 0, 5); 
   gemEntity3.object3D.scale.setScalar(3);  
+
+  // make gem 3 clickable / collectable
+  gemEntity3.addComponent(Interactable);
+  gemEntity3.object3D.addEventListener('pointerdown', () => collectGem(gemEntity3));
 
   // Quest panel
   world.registerSystem(PanelSystem);
