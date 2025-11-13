@@ -206,7 +206,7 @@ World.create(document.getElementById('scene-container'), {
     const boardMesh = new Mesh(boardGeometry, boardMaterial);
 
     const entity = world.createTransformEntity(boardMesh);
-    entity.object3D.position.set(0, 1.5, -3);
+    entity.object3D.position.set(0, 1.5, -5.5);
     entity.object3D.visible = false;
 
     messageBoard = { canvas, ctx, texture, entity };
