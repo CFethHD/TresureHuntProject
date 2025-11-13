@@ -7,6 +7,7 @@ import {
   AssetManager, AssetType,
   LocomotionEnvironment, EnvironmentType,
   PlaneGeometry,
+  CanvasTexture,          // <<< ADDED
 } from '@iwsdk/core';
 
 import {
@@ -50,24 +51,19 @@ World.create(document.getElementById('scene-container'), {
 
   const { camera } = world;
 
-  // --- SIMPLE TREASURE / SCORE SYSTEM (ADDED) ---
+  // score system
   const totalGems = 3;
   let collectedGems = 0;
 
   function showWinMessage() {
-    // You can replace this with the message code from the slides if needed
-    alert('You win! All treasures collected!');
+    // use the message-board helper from below
+    showTemporaryMessage('You have found all 3 treasures!!!', 7000);
   }
 
   function collectGem(entity) {
-    // remove the gem from the world
     entity.destroy();
-
-    // update score
     collectedGems++;
     console.log(`Gems collected: ${collectedGems} / ${totalGems}`);
-
-    // check win condition
     if (collectedGems === totalGems) {
       showWinMessage();
     }
@@ -87,8 +83,6 @@ World.create(document.getElementById('scene-container'), {
   const treeModel = AssetManager.getGLTF('tree').scene;
   const treeEntity = world.createTransformEntity(treeModel);
   treeEntity.object3D.position.set(-10, -0.5, -2); 
-  // Optional scaling if tree is too big/small:
-  // treeEntity.object3D.scale.setScalar(0.5);
 
   // adding second tree
   const treeModel2 = AssetManager.getGLTF('tree').scene.clone(); 
@@ -101,8 +95,6 @@ World.create(document.getElementById('scene-container'), {
   const gemEntity = world.createTransformEntity(gemModel);
   gemEntity.object3D.position.set(-3, 3, -2); 
   gemEntity.object3D.scale.setScalar(3);  
-
-  // make gem 1 clickable / collectable
   gemEntity.addComponent(Interactable);
   gemEntity.object3D.addEventListener('pointerdown', () => collectGem(gemEntity));
 
@@ -111,18 +103,14 @@ World.create(document.getElementById('scene-container'), {
   const gemEntity2 = world.createTransformEntity(gemModel2);
   gemEntity2.object3D.position.set(2, 3, -5); 
   gemEntity2.object3D.scale.setScalar(3);  
-
-  // make gem 2 clickable / collectable
   gemEntity2.addComponent(Interactable);
   gemEntity2.object3D.addEventListener('pointerdown', () => collectGem(gemEntity2));
 
-  // adding third gem (found in right tree)
+  // adding third gem
   const gemModel3 = AssetManager.getGLTF('gem').scene.clone();
   const gemEntity3 = world.createTransformEntity(gemModel3);
   gemEntity3.object3D.position.set(0, 0, 5); 
   gemEntity3.object3D.scale.setScalar(3);  
-
-  // make gem 3 clickable / collectable
   gemEntity3.addComponent(Interactable);
   gemEntity3.object3D.addEventListener('pointerdown', () => collectGem(gemEntity3));
 
@@ -158,6 +146,71 @@ World.create(document.getElementById('scene-container'), {
     } catch (e) {
       return false;
     }
+  }
+
+
+  // scoreboard code
+  let messageBoard; // { canvas, ctx, texture, entity }
+
+  function showMessage(message) {
+    const { canvas, ctx, texture, entity } = initMessageBoard();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = 'bold 120px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#111100';
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+
+    texture.needsUpdate = true;
+    entity.object3D.visible = true;
+  }
+
+  function hideMessage() {
+    if (!messageBoard) return;
+    const { canvas, ctx, texture, entity } = messageBoard;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    texture.needsUpdate = true;
+    entity.object3D.visible = false;
+  }
+
+  function showTemporaryMessage(message, duration = 2000) {
+    showMessage(message);
+    setTimeout(hideMessage, duration);
+  }
+
+  function initMessageBoard() {
+    if (messageBoard) return messageBoard;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 2048;
+    canvas.height = 1024;
+
+    const ctx = canvas.getContext('2d');
+    const texture = new CanvasTexture(canvas);
+
+    const aspect = canvas.width / canvas.height;
+    const boardHeight = 1;
+    const boardWidth = boardHeight * aspect;
+
+    const boardMaterial = new MeshStandardMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+    });
+
+    const boardGeometry = new PlaneGeometry(boardWidth, boardHeight);
+    const boardMesh = new Mesh(boardGeometry, boardMaterial);
+
+    const entity = world.createTransformEntity(boardMesh);
+    entity.object3D.position.set(0, 1.5, -3);
+    entity.object3D.visible = false;
+
+    messageBoard = { canvas, ctx, texture, entity };
+    return messageBoard;
   }
 
 });
